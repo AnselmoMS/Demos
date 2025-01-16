@@ -100,7 +100,6 @@
         <DCCReference Include="Model\Model.DAO.Pessoa.Memory.Constants.pas"/>
         <DCCReference Include="Model\Model.DAO.Pessoa.Dataset.pas"/>
         <DCCReference Include="Comum\Comum.Constants.pas"/>
-        <DCCReference Include="Comum\DelayableTask.pas"/>
         <DCCReference Include="View\View.PessoaPesquisa.pas">
             <Form>frmPessoaPesquisa</Form>
             <FormType>dfm</FormType>

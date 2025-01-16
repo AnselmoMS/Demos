@@ -16,7 +16,6 @@ uses
   Model.DAO.Pessoa.Memory.Constants in 'Model\Model.DAO.Pessoa.Memory.Constants.pas',
   Model.DAO.Pessoa.Dataset in 'Model\Model.DAO.Pessoa.Dataset.pas',
   Comum.Constants in 'Comum\Comum.Constants.pas',
-  DelayableTask in 'Comum\DelayableTask.pas',
   View.PessoaPesquisa in 'View\View.PessoaPesquisa.pas' {frmPessoaPesquisa},
   View.PessoaCadastro in 'View\View.PessoaCadastro.pas' {frmPessoaCadastro};
 

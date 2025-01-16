@@ -66,7 +66,11 @@ type
   private
     FPresenter: TPessoaPresenter;
     FMemTableLista: TADMemTable;
+    FTimerDelayLoadLista: TTimer;
+    procedure ConfigurarTimerDelayLista;
     procedure NavigateToNextControl(var Key: Char);
+    procedure ExibirPessoaSelecionadaDaLista;
+    procedure OnTimeOut(Sender: TObject);
   public
     function DataSetLista: TDataSet;
     function ObterId: Integer;
@@ -80,9 +84,6 @@ type
     procedure HabilitarControlesNavegar(AHabilitar: Boolean);
     procedure LimparControlesCadastro;
     procedure SetDataSetLista(ADataSet: TDataSet);
-
-    procedure ResetDelayLoadList;
-    procedure SetDelayTimeOut(ACurrentTimeOut: Integer);
   end;
 
 implementation
@@ -94,25 +95,21 @@ begin
   Result := edtNome.Text;
 end;
 
+procedure TfrmPessoaCadastroCompleto.OnTimeOut(Sender: TObject);
+begin
+  FTimerDelayLoadLista.Enabled := False;
+  ExibirPessoaSelecionadaDaLista;
+end;
+
 function TfrmPessoaCadastroCompleto.Perguntar(AMensagem: String): TModalResult;
 begin
   Result := Application.MessageBox(PChar(AMensagem), PChar(Self.Caption), MB_ICONQUESTION + MB_YESNO)
-end;
-
-procedure TfrmPessoaCadastroCompleto.ResetDelayLoadList;
-begin
-  pbLista.Position := 0;
 end;
 
 procedure TfrmPessoaCadastroCompleto.SetDataSetLista(ADataSet: TDataSet);
 begin
   FMemTableLista := TADMemTable(ADataSet);
   dsLista.DataSet := FMemTableLista;
-end;
-
-procedure TfrmPessoaCadastroCompleto.SetDelayTimeOut(ACurrentTimeOut: Integer);
-begin
-  pbLista.Position := ACurrentTimeOut;
 end;
 
 function TfrmPessoaCadastroCompleto.ObterId: Integer;
@@ -147,6 +144,13 @@ begin
   FPresenter.Salvar;
 end;
 
+procedure TfrmPessoaCadastroCompleto.ConfigurarTimerDelayLista;
+begin
+  FTimerDelayLoadLista.Interval := 600;
+  FTimerDelayLoadLista.Enabled := False;
+  FTimerDelayLoadLista.OnTimer := OnTimeOut;
+end;
+
 function TfrmPessoaCadastroCompleto.DataSetLista: TDataSet;
 begin
   Result := dsLista.DataSet;
@@ -154,22 +158,15 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.DBGrid1DblClick(Sender: TObject);
 begin
-  FPresenter.ExibirPessoaSelecionadaDaLista;
+  ExibirPessoaSelecionadaDaLista;
 end;
 
 procedure TfrmPessoaCadastroCompleto.dsListaDataSetScrolled(Sender: TObject);
 begin
   if chkShowRecordOnScroll.Checked then
   begin
-    try
-      pbLista.Visible := True;
-      FPresenter.ExibirPessoaSelecionadaDaLista;
-    except
-      on e: EAbort do
-        Exit;
-    else
-      raise;
-    end;
+    FTimerDelayLoadLista.Enabled:= False;
+    FTimerDelayLoadLista.Enabled:= True;
   end;
 end;
 
@@ -193,6 +190,18 @@ begin
   end;
 end;
 
+procedure TfrmPessoaCadastroCompleto.ExibirPessoaSelecionadaDaLista;
+begin
+  try
+    FPresenter.ExibirPessoaSelecionadaDaLista;
+  except
+    on e: EAbort do
+      Exit;
+  else
+    raise;
+  end;
+end;
+
 procedure TfrmPessoaCadastroCompleto.ExibirRegistro(APessoa: TPessoa);
 begin
   lblId.Caption := InTToStr(APessoa.Id);
@@ -211,10 +220,13 @@ begin
   FPresenter := TPessoaPresenter.Create(Self);
   FPresenter.AfterDataChange := FPresenter.ListarPessoas;
   FMemTableLista := nil;
+  FTimerDelayLoadLista:= TTimer.Create(Self);
+  ConfigurarTimerDelayLista;
 end;
 
 procedure TfrmPessoaCadastroCompleto.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(FTimerDelayLoadLista);
   FreeAndNil(FPresenter);
 end;
 

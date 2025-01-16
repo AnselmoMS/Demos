@@ -55,8 +55,7 @@ implementation
 
 uses
   uADCompDataSet,
-  System.UITypes,
-  DelayableTask;
+  System.UITypes;
 
 procedure TPessoaPresenter.Excluir(AId: Integer);
 begin
@@ -124,19 +123,7 @@ begin
     else
       Abort;
 
-  TDelayableTask
-    .GetInstance
-    .OnCheckTimeOut(
-        procedure (ACurrentTimeOut: Integer)
-        begin
-          TThread.Synchronize(nil,
-            procedure
-            begin
-              FView.SetDelayTimeOut(ACurrentTimeOut);
-            end);
-        end
-    )
-    .Start(TIMEOUT_LOAD_LIST, CarregarRegistroDoBanco);
+   CarregarRegistroDoBanco;
 end;
 
 procedure TPessoaPresenter.IniciarNovoRegistro;

@@ -23,9 +23,6 @@ type
     procedure HabilitarControlesNavegar(AHabilitar: Boolean);
     procedure LimparControlesCadastro;
     procedure SetDataSetLista(ADataSet: TDataSet);
-    //Delay
-    procedure ResetDelayLoadList;
-    procedure SetDelayTimeOut(ACurrentTimeOut: Integer);
   end;
 
 implementation
