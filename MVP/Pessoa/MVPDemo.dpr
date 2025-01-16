@@ -17,12 +17,15 @@ uses
   Model.DAO.Pessoa.Dataset in 'Model\Model.DAO.Pessoa.Dataset.pas',
   Comum.Constants in 'Comum\Comum.Constants.pas',
   View.PessoaPesquisa in 'View\View.PessoaPesquisa.pas' {frmPessoaPesquisa},
-  View.PessoaCadastro in 'View\View.PessoaCadastro.pas' {frmPessoaCadastro};
+  View.PessoaCadastro in 'View\View.PessoaCadastro.pas' {frmPessoaCadastro},
+  View.Interfaces in 'View\View.Interfaces.pas',
+  Presenter.PessoaDataSet in 'Presenter\Presenter.PessoaDataSet.pas';
 
 {$R *.res}
 
 begin
   Application.Initialize;
+  ReportMemoryLeaksOnShutdown := True;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;

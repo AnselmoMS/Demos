@@ -15,13 +15,17 @@ type
     function ObterId: Integer;
     function ObterIdade: Integer;
     function ObterNome: string;
-    function Perguntar(AMensagem: String): TModalResult;
-    procedure ExibirMensagem(const Mensagem: string; AMenssageSeverity: TMessageSeverity = msInformation);
     procedure ExibirRegistro(APessoa: TPessoa);
     procedure HabilitarControlesAcoes(ARecordState: TDataSetState);
     procedure HabilitarControlesCadastro(AHabilitar: Boolean);
     procedure HabilitarControlesNavegar(AHabilitar: Boolean);
     procedure LimparControlesCadastro;
+    procedure SetDataSetLista(ADataSet: TDataSet);
+  end;
+
+  IViewPessoaDataSet = interface
+    ['{7489C0CA-3527-4DCD-9651-14EB467F0393}']
+    function DataSetLista: TDataSet;
     procedure SetDataSetLista(ADataSet: TDataSet);
   end;
 

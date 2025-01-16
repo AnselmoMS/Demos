@@ -64,11 +64,10 @@ function TDAOPessoaMemory.GetById(AId: Integer): TPessoa;
 var
   P : TPessoa;
 begin
-  Result:= nil;
   for P in FTablePessoa do
   begin
     if P.Id = AId then
-      Exit(P);
+      Exit(P.GetClone);
   end;
   raise Exception.Create(Format('Pessoa com id %d não encontrado', [AId]));
 end;

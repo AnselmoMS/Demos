@@ -28,7 +28,7 @@ type
     dsResultado: TDataSource;
     procedure dbgridResultadoDblClick(Sender: TObject);
   private
-    FPresenter: TPessoaPresenter;
+    //FPresenter: TPessoaPresenter;
   public
     { Public declarations }
   end;

@@ -34,10 +34,13 @@ uses
   uADGUIxIntf,
   uADGUIxFormsWait,
   uADCompGUIx,
-  Comum.Constants, Vcl.ComCtrls;
+  Comum.Constants,
+  Vcl.ComCtrls,
+  View.Interfaces,
+  Presenter.PessoaDataset;
 
 type
-  TfrmPessoaCadastroCompleto = class(TForm, IViewPessoa)
+  TfrmPessoaCadastroCompleto = class(TForm, IView, IViewPessoa, IViewPessoaDataSet)
     edtNome: TEdit;
     btnNovo: TButton;
     DBGrid1: TDBGrid;
@@ -64,7 +67,8 @@ type
     procedure btnEditarClick(Sender: TObject);
     procedure btnExcluirClick(Sender: TObject);
   private
-    FPresenter: TPessoaPresenter;
+    FPessoaPresenter: TPessoaPresenter;
+    FPessoaDatasetPresenter: TPessoaDatasetPresenter;
     FMemTableLista: TADMemTable;
     FTimerDelayLoadLista: TTimer;
     procedure ConfigurarTimerDelayLista;
@@ -124,24 +128,24 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.btnEditarClick(Sender: TObject);
 begin
-  FPresenter.Editar;
+  FPessoaPresenter.Editar;
   edtNome.SetFocus;
 end;
 
 procedure TfrmPessoaCadastroCompleto.btnExcluirClick(Sender: TObject);
 begin
-  FPresenter.Excluir(ObterId);
+  FPessoaPresenter.Excluir(ObterId);
 end;
 
 procedure TfrmPessoaCadastroCompleto.btnNovoClick(Sender: TObject);
 begin
-  FPresenter.IniciarNovoRegistro;
+  FPessoaPresenter.IniciarNovoRegistro;
   edtNome.SetFocus;
 end;
 
 procedure TfrmPessoaCadastroCompleto.btnSalvarClick(Sender: TObject);
 begin
-  FPresenter.Salvar;
+  FPessoaPresenter.Salvar;
 end;
 
 procedure TfrmPessoaCadastroCompleto.ConfigurarTimerDelayLista;
@@ -191,9 +195,22 @@ begin
 end;
 
 procedure TfrmPessoaCadastroCompleto.ExibirPessoaSelecionadaDaLista;
+var
+  LPessoa: TPessoa;
 begin
   try
-    FPresenter.ExibirPessoaSelecionadaDaLista;
+    if FPessoaPresenter.RecordState in [dsInsert, dsEdit] then
+      if Perguntar('Descartar alterações?') = mrYes then
+        FPessoaPresenter.Cancelar
+      else
+        Abort;
+
+    LPessoa:= FPessoaDatasetPresenter.ObterPessoaDaLista;
+    try
+      ExibirRegistro(LPessoa);
+    finally
+      LPessoa.Free;
+    end;
   except
     on e: EAbort do
       Exit;
@@ -217,8 +234,11 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.FormCreate(Sender: TObject);
 begin
-  FPresenter := TPessoaPresenter.Create(Self);
-  FPresenter.AfterDataChange := FPresenter.ListarPessoas;
+  FPessoaPresenter := TPessoaPresenter.Create(Self, Self);
+
+  FPessoaDatasetPresenter := TPessoaDatasetPresenter.Create(Self, Self);
+  FPessoaPresenter.AfterDataChange := FPessoaDatasetPresenter.CarregarLista;
+
   FMemTableLista := nil;
   FTimerDelayLoadLista:= TTimer.Create(Self);
   ConfigurarTimerDelayLista;
@@ -227,7 +247,8 @@ end;
 procedure TfrmPessoaCadastroCompleto.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(FTimerDelayLoadLista);
-  FreeAndNil(FPresenter);
+  FreeAndNil(FPessoaDataSetPresenter);
+  FreeAndNil(FPessoaPresenter);
 end;
 
 procedure TfrmPessoaCadastroCompleto.FormKeyPress(Sender: TObject; var Key: Char);
@@ -237,10 +258,9 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.FormShow(Sender: TObject);
 begin
-  FPresenter.ListarPessoas;
+  FPessoaDatasetPresenter.CarregarLista;
   HabilitarControlesCadastro(False);
   HabilitarControlesAcoes(dsBrowse);
-  pbLista.Max := FPresenter.TIMEOUT_LOAD_LIST;
 end;
 
 procedure TfrmPessoaCadastroCompleto.HabilitarControlesAcoes(ARecordState: TDataSetState);
