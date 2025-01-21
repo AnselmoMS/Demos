@@ -11,7 +11,8 @@ uses
   Comum.Constants,
   System.SysUtils,
   System.Classes,
-  View.Interfaces;
+  View.Interfaces,
+  Presenter.Pessoa.Types;
 
 type
   TPessoaPresenter = class
@@ -21,13 +22,16 @@ type
     FRecordState: TDataSetState;
     FService: TPessoaService;
     FView: IView;
-    FViewPessoa: IViewPessoa;
+    FViewCadastro: IViewPessoaCadastro;
+    FOnStateChange: TProc<TDataSetState>;
     procedure ExecuteAfterDataChange;
     function ObterPessoaDaView: TPessoa;
     procedure SetAfterDataChange(const Value: TProc);
     procedure SetRecordState(const Value: TDataSetState);
+    procedure SetOnStateChange(const Value: TProc<TDataSetState>);
   public
-    constructor Create(AView: IView; AViewPessoa: IViewPessoa);
+    constructor CreateFromView(AView: IView; AViewPessoa: IViewPessoaCadastro);
+    constructor Create(AViewStyle: TPessoaViewStyle);
     destructor Destroy; override;
     //
     procedure Cancelar;
@@ -37,15 +41,19 @@ type
     procedure Salvar;
     procedure CarregarId(AId: Integer);
     //
+    procedure ExibirView;
+    //
     property AfterDataChange: TProc read FAfterDataChange write SetAfterDataChange;
     property RecordState: TDataSetState read FRecordState;
+    property OnStateChange: TProc<TDataSetState> read FOnStateChange write SetOnStateChange;
   end;
 
 implementation
 
 uses
   uADCompDataSet,
-  System.UITypes;
+  System.UITypes,
+  Presenter.Pessoa.ViewFactory;
 
 procedure TPessoaPresenter.Excluir(AId: Integer);
 begin
@@ -62,6 +70,11 @@ begin
     FAfterDataChange;
 end;
 
+procedure TPessoaPresenter.ExibirView;
+begin
+  FView.Exibir;
+end;
+
 procedure TPessoaPresenter.Cancelar;
 begin
   SetRecordState(dsBrowse);
@@ -74,15 +87,32 @@ begin
   FView.ExibirMensagem('Carregando registro selecionado...', msLog);
   Sleep(2000); //Atraso artifical para simular busca no banco
   LPessoa := FService.ObterPorId(AId); //FService.GetCurrentFromDataset(FDataSetLista);
-  FViewPessoa.ExibirRegistro(LPessoa);
+  FViewCadastro.ExibirRegistro(LPessoa);
 end;
 
-constructor TPessoaPresenter.Create(AView: IView; AViewPessoa: IViewPessoa);
+constructor TPessoaPresenter.Create(AViewStyle: TPessoaViewStyle);
+begin
+  case AViewStyle of
+    pvsCompleto:
+    begin
+      FViewCadastro:= TPessoaViewFactory.ObterViewCadastroCompleto(Self);
+      FView:= FViewCadastro.AsView;
+    end;
+
+    pvsSomenteCadastro:
+    begin
+      FViewCadastro:= TPessoaViewFactory.ObterViewCadastro(Self);
+      FView:= FViewCadastro.AsView;
+    end;
+  end;
+end;
+
+constructor TPessoaPresenter.CreateFromView(AView: IView; AViewPessoa: IViewPessoaCadastro);
 begin
   FService := TPessoaService.Create;
   FView := AView;
-  FViewPessoa := AViewPessoa;
-  FRecordState := dsInactive;
+  FViewCadastro := AViewPessoa;
+  SetRecordState(dsInactive);
 end;
 
 destructor TPessoaPresenter.Destroy;
@@ -98,16 +128,16 @@ end;
 
 procedure TPessoaPresenter.IniciarNovoRegistro;
 begin
-  FViewPessoa.LimparControlesCadastro;
+  FViewCadastro.LimparControlesCadastro;
   SetRecordState(dsInsert);
 end;
 
 function TPessoaPresenter.ObterPessoaDaView: TPessoa;
 begin
   Result := TPessoa.Create;
-  Result.Id := FViewPessoa.ObterId;
-  Result.Nome := FViewPessoa.ObterNome;
-  Result.Idade := FViewPessoa.ObterIdade;
+  Result.Id := FViewCadastro.ObterId;
+  Result.Nome := FViewCadastro.ObterNome;
+  Result.Idade := FViewCadastro.ObterIdade;
 end;
 
 procedure TPessoaPresenter.Salvar;
@@ -149,11 +179,18 @@ begin
   FAfterDataChange := Value;
 end;
 
+procedure TPessoaPresenter.SetOnStateChange(const Value: TProc<TDataSetState>);
+begin
+  FOnStateChange := Value;
+end;
+
 procedure TPessoaPresenter.SetRecordState(const Value: TDataSetState);
 begin
-  FViewPessoa.HabilitarControlesCadastro((Value in [dsInsert, dsEdit]));
-  FViewPessoa.HabilitarControlesNavegar((Value in [dsBrowse]));
-  FViewPessoa.HabilitarControlesAcoes(Value);
+  if Assigned(FOnStateChange) then
+    FOnStateChange(Value);
+
+  FViewCadastro.HabilitarControlesCadastro((Value in [dsInsert, dsEdit]));
+  FViewCadastro.HabilitarControlesAcoes(Value);
   FRecordState := Value;
 end;
 

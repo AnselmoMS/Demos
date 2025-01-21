@@ -13,16 +13,20 @@ uses
   Vcl.Forms,
   Vcl.Dialogs,
   Vcl.StdCtrls,
-  View.PessoaCadastroCompleto;
+  View.PessoaCadastroCompleto,
+  Presenter.Pessoa;
 
 type
   TfrmMain = class(TForm)
     Button1: TButton;
     btnBuscarRegistro: TButton;
+    btnViewFromPresenter: TButton;
     procedure Button1Click(Sender: TObject);
     procedure btnBuscarRegistroClick(Sender: TObject);
+    procedure btnViewFromPresenterClick(Sender: TObject);
   private
     frmPessoaCadastro: TfrmPessoaCadastroCompleto;
+    FPessoaPresenter: TPessoaPresenter;
     procedure AbrirCadastroPessoaCompleto;
     procedure AbrirPesquisarPessoa;
   public
@@ -33,6 +37,9 @@ var
   frmMain: TfrmMain;
 
 implementation
+
+uses
+  Presenter.Pessoa.Types;
 
 {$R *.dfm}
 
@@ -50,6 +57,12 @@ end;
 procedure TfrmMain.btnBuscarRegistroClick(Sender: TObject);
 begin
   AbrirPesquisarPessoa;
+end;
+
+procedure TfrmMain.btnViewFromPresenterClick(Sender: TObject);
+begin
+  FPessoaPresenter:= TPessoaPresenter.Create(pvsCompleto);
+  FPessoaPresenter.ExibirView;
 end;
 
 procedure TfrmMain.Button1Click(Sender: TObject);

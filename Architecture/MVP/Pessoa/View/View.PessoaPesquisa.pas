@@ -20,7 +20,7 @@ uses
   View.Pessoa.Interfaces;
 
 type
-  TfrmPessoaPesquisa = class(TForm{, IViewPessoa})
+  TfrmPessoaPesquisa = class(TForm{, IViewPessoaDataset})
     dbgridResultado: TDBGrid;
     edtNome: TEdit;
     Edit2: TEdit;

@@ -19,7 +19,9 @@ uses
   View.PessoaPesquisa in 'View\View.PessoaPesquisa.pas' {frmPessoaPesquisa},
   View.PessoaCadastro in 'View\View.PessoaCadastro.pas' {frmPessoaCadastro},
   View.Interfaces in 'View\View.Interfaces.pas',
-  Presenter.PessoaDataSet in 'Presenter\Presenter.PessoaDataSet.pas';
+  Presenter.PessoaDataSet in 'Presenter\Presenter.PessoaDataSet.pas',
+  Presenter.Pessoa.ViewFactory in 'Presenter\Presenter.Pessoa.ViewFactory.pas',
+  Presenter.Pessoa.Types in 'Presenter\Presenter.Pessoa.Types.pas';
 
 {$R *.res}
 

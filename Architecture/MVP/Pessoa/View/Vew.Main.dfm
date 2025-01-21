@@ -31,4 +31,13 @@ object frmMain: TfrmMain
     TabOrder = 1
     OnClick = btnBuscarRegistroClick
   end
+  object btnViewFromPresenter: TButton
+    Left = 168
+    Top = 24
+    Width = 121
+    Height = 25
+    Caption = 'Cadastro Presenter'
+    TabOrder = 2
+    OnClick = btnViewFromPresenterClick
+  end
 end

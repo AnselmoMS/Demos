@@ -14,7 +14,6 @@ uses
   Vcl.Dialogs,
   Vcl.StdCtrls,
   Vcl.Grids,
-  View.Pessoa.Interfaces,
   uADStanIntf, uADStanOption,
   uADStanParam,
   uADStanError,
@@ -27,7 +26,6 @@ uses
   uADCompDataSet,
   uADCompClient,
   Vcl.DBGrids,
-  Presenter.Pessoa,
   Vcl.Samples.Spin,
   Model.Entity.Pessoa,
   JvDataSource,
@@ -36,11 +34,13 @@ uses
   uADCompGUIx,
   Comum.Constants,
   Vcl.ComCtrls,
+  Presenter.Pessoa,
+  View.Pessoa.Interfaces,
   View.Interfaces,
   Presenter.PessoaDataset;
 
 type
-  TfrmPessoaCadastroCompleto = class(TForm, IView, IViewPessoa, IViewPessoaDataSet)
+  TfrmPessoaCadastroCompleto = class(TForm, IView, IViewPessoaCadastro, IViewPessoaDataSet{, IViewSaldo})
     edtNome: TEdit;
     btnNovo: TButton;
     DBGrid1: TDBGrid;
@@ -71,21 +71,28 @@ type
     FPessoaDatasetPresenter: TPessoaDatasetPresenter;
     FMemTableLista: TADMemTable;
     FTimerDelayLoadLista: TTimer;
+    procedure InicializarPresenter;
     procedure ConfigurarTimerDelayLista;
     procedure NavigateToNextControl(var Key: Char);
     procedure ExibirPessoaSelecionadaDaLista;
     procedure OnTimeOut(Sender: TObject);
   public
+    constructor Create(AOwner: TComponent; APresenter: TPessoaPresenter); overload;
+    constructor Create(AOwner: TComponent); overload; override;
+    function AsView: IView;
     function DataSetLista: TDataSet;
+    function ExibirExclusivo: TModalResult;
     function ObterId: Integer;
     function ObterIdade: Integer;
     function ObterNome: string;
     function Perguntar(AMensagem: String): TModalResult;
+    procedure Exibir;
+
     procedure ExibirMensagem(const AMensagem: string; AMessageSeverity: TMessageSeverity);
     procedure ExibirRegistro(APessoa: TPessoa);
     procedure HabilitarControlesAcoes(ARecordState: TDataSetState);
     procedure HabilitarControlesCadastro(AHabilitar: Boolean);
-    procedure HabilitarControlesNavegar(AHabilitar: Boolean);
+    procedure HabilitarControlesNavegar(ADataSetState: TDataSetState);
     procedure LimparControlesCadastro;
     procedure SetDataSetLista(ADataSet: TDataSet);
   end;
@@ -126,6 +133,11 @@ begin
   Result := spnedtIdade.Value;
 end;
 
+function TfrmPessoaCadastroCompleto.AsView: IView;
+begin
+  Result:= Self;
+end;
+
 procedure TfrmPessoaCadastroCompleto.btnEditarClick(Sender: TObject);
 begin
   FPessoaPresenter.Editar;
@@ -155,6 +167,20 @@ begin
   FTimerDelayLoadLista.OnTimer := OnTimeOut;
 end;
 
+constructor TfrmPessoaCadastroCompleto.Create(AOwner: TComponent; APresenter: TPessoaPresenter);
+begin
+  inherited Create(AOwner);
+  FPessoaPresenter := APresenter;
+  InicializarPresenter;
+end;
+
+constructor TfrmPessoaCadastroCompleto.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FPessoaPresenter := TPessoaPresenter.CreateFromView(Self, Self);
+  InicializarPresenter;
+end;
+
 function TfrmPessoaCadastroCompleto.DataSetLista: TDataSet;
 begin
   Result := dsLista.DataSet;
@@ -172,6 +198,16 @@ begin
     FTimerDelayLoadLista.Enabled:= False;
     FTimerDelayLoadLista.Enabled:= True;
   end;
+end;
+
+procedure TfrmPessoaCadastroCompleto.Exibir;
+begin
+  Self.Show
+end;
+
+function TfrmPessoaCadastroCompleto.ExibirExclusivo: TModalResult;
+begin
+  Result := Self.ShowModal;
 end;
 
 procedure TfrmPessoaCadastroCompleto.ExibirMensagem(const AMensagem: string; AMessageSeverity: TMessageSeverity);
@@ -234,11 +270,6 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.FormCreate(Sender: TObject);
 begin
-  FPessoaPresenter := TPessoaPresenter.Create(Self, Self);
-
-  FPessoaDatasetPresenter := TPessoaDatasetPresenter.Create(Self, Self);
-  FPessoaPresenter.AfterDataChange := FPessoaDatasetPresenter.CarregarLista;
-
   FMemTableLista := nil;
   FTimerDelayLoadLista:= TTimer.Create(Self);
   ConfigurarTimerDelayLista;
@@ -277,9 +308,16 @@ begin
   spnedtIdade.Enabled := AHabilitar;
 end;
 
-procedure TfrmPessoaCadastroCompleto.HabilitarControlesNavegar(AHabilitar: Boolean);
+procedure TfrmPessoaCadastroCompleto.HabilitarControlesNavegar(ADataSetState: TDataSetState);
 begin
   //DBNavigator habilita automaticamente
+end;
+
+procedure TfrmPessoaCadastroCompleto.InicializarPresenter;
+begin
+  FPessoaDatasetPresenter := TPessoaDatasetPresenter.Create(Self, Self);
+  FPessoaPresenter.AfterDataChange := FPessoaDatasetPresenter.CarregarLista;
+  FPessoaPresenter.OnStateChange := HabilitarControlesNavegar;
 end;
 
 procedure TfrmPessoaCadastroCompleto.LimparControlesCadastro;
