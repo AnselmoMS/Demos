@@ -3,7 +3,6 @@ unit Model.Service.Pessoa;
 interface
 
 uses
-  System.Generics.Collections,
   Model.Entity.Pessoa,
   Model.DAO.Pessoa.Interfaces,
   DB;

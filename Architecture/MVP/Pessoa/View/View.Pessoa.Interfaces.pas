@@ -5,7 +5,7 @@ interface
 uses
   Data.DB,
   Model.Entity.Pessoa,
-  Comum.Constants,
+  Comum.Types,
   System.UITypes,
   View.Interfaces;
 

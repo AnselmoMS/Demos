@@ -8,7 +8,7 @@ uses
   View.Pessoa.Interfaces,
   Data.DB,
   uADCompClient,
-  Comum.Constants,
+  Comum.Types,
   System.SysUtils,
   System.Classes,
   View.Interfaces;
@@ -34,7 +34,7 @@ type
 implementation
 
 uses
-  uADCompDataSet,
+
   System.UITypes;
 
   { TPessoaPresenterList }
@@ -75,7 +75,7 @@ begin
   if FPessoaDataSet.RecordCount = 0 then
     raise Exception.Create('Lista não possui registros em exibição');
 
-  FView.ExibirMensagem('Carregando registro selecionado...', msLog);
+  FView.Notificar('Carregando registro selecionado...', msLog);
   Sleep(2000); //Atraso artifical para simular busca no banco
   Result := FService.ObterPorId(FPessoaDataSet.FieldByName('Id').AsInteger); //FService.GetCurrentFromDataset(FDataSetLista);
 end;

@@ -15,9 +15,7 @@ uses
   Vcl.StdCtrls,
   Vcl.Grids,
   Vcl.DBGrids,
-  Data.DB,
-  Presenter.Pessoa,
-  View.Pessoa.Interfaces;
+  Data.DB;
 
 type
   TfrmPessoaPesquisa = class(TForm{, IViewPessoaDataset})

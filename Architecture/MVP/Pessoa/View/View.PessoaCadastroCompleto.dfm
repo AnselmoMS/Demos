@@ -2,7 +2,7 @@ object frmPessoaCadastroCompleto: TfrmPessoaCadastroCompleto
   Left = 0
   Top = 0
   Caption = 'Cadastro de Pessoa'
-  ClientHeight = 408
+  ClientHeight = 440
   ClientWidth = 704
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -148,6 +148,7 @@ object frmPessoaCadastroCompleto: TfrmPessoaCadastroCompleto
   end
   object dsLista: TJvDataSource
     AutoEdit = False
+    DisableEventsOnLoading = False
     OnDataSetScrolled = dsListaDataSetScrolled
     Left = 280
     Top = 304

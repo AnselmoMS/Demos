@@ -8,7 +8,7 @@ uses
   View.Pessoa.Interfaces,
   Data.DB,
   uADCompClient,
-  Comum.Constants,
+  Comum.Types,
   System.SysUtils,
   System.Classes,
   View.Interfaces,
@@ -51,7 +51,6 @@ type
 implementation
 
 uses
-  uADCompDataSet,
   System.UITypes,
   Presenter.Pessoa.ViewFactory;
 
@@ -84,7 +83,7 @@ procedure TPessoaPresenter.CarregarId(AId: Integer);
 var
   LPessoa: TPessoa;
 begin
-  FView.ExibirMensagem('Carregando registro selecionado...', msLog);
+  FView.Notificar('Carregando registro selecionado...', msLog);
   Sleep(2000); //Atraso artifical para simular busca no banco
   LPessoa := FService.ObterPorId(AId); //FService.GetCurrentFromDataset(FDataSetLista);
   FViewCadastro.ExibirRegistro(LPessoa);
@@ -159,14 +158,14 @@ begin
 
       SetRecordState(dsBrowse);
 
-      FView.ExibirMensagem('Pessoa registrada com sucesso!', msLog);
-      FView.ExibirMensagem('Pessoa registrada com sucesso!', msInformation);
+      FView.Notificar('Pessoa registrada com sucesso!', msLog);
+      FView.Notificar('Pessoa registrada com sucesso!', msInformation);
 
       ExecuteAfterDataChange;
     Except
       on e: Exception do
       begin
-        FView.ExibirMensagem(E.Message, msError);
+        FView.Notificar(E.Message, msError);
       end;
     end;
   finally

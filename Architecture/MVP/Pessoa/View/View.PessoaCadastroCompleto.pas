@@ -18,12 +18,9 @@ uses
   uADStanParam,
   uADStanError,
   uADDatSManager,
-  uADPhysIntf,
-  uADDAptIntf,
   Vcl.ExtCtrls,
   Vcl.DBCtrls,
   Data.DB,
-  uADCompDataSet,
   uADCompClient,
   Vcl.DBGrids,
   Vcl.Samples.Spin,
@@ -32,7 +29,7 @@ uses
   uADGUIxIntf,
   uADGUIxFormsWait,
   uADCompGUIx,
-  Comum.Constants,
+  Comum.Types,
   Vcl.ComCtrls,
   Presenter.Pessoa,
   View.Pessoa.Interfaces,
@@ -88,7 +85,7 @@ type
     function Perguntar(AMensagem: String): TModalResult;
     procedure Exibir;
 
-    procedure ExibirMensagem(const AMensagem: string; AMessageSeverity: TMessageSeverity);
+    procedure Notificar(const AMensagem: string; AMessageSeverity: TMessageSeverity);
     procedure ExibirRegistro(APessoa: TPessoa);
     procedure HabilitarControlesAcoes(ARecordState: TDataSetState);
     procedure HabilitarControlesCadastro(AHabilitar: Boolean);
@@ -210,7 +207,7 @@ begin
   Result := Self.ShowModal;
 end;
 
-procedure TfrmPessoaCadastroCompleto.ExibirMensagem(const AMensagem: string; AMessageSeverity: TMessageSeverity);
+procedure TfrmPessoaCadastroCompleto.Notificar(const AMensagem: string; AMessageSeverity: TMessageSeverity);
 begin
   case AMessageSeverity of
     msLog:
@@ -260,7 +257,7 @@ begin
   lblId.Caption := InTToStr(APessoa.Id);
   edtNome.Text := APessoa.Nome;
   spnedtIdade.Value := APessoa.Idade;
-  ExibirMensagem('Registro carregado '+ QuotedStr(APessoa.Nome), msLog);
+  Notificar('Registro carregado '+ QuotedStr(APessoa.Nome), msLog);
 end;
 
 procedure TfrmPessoaCadastroCompleto.FormClose(Sender: TObject; var Action: TCloseAction);
