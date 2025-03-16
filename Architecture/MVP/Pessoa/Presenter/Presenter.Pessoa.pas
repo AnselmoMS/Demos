@@ -3,16 +3,16 @@ unit Presenter.Pessoa;
 interface
 
 uses
-  Model.Service.Pessoa,
-  Model.Entity.Pessoa,
+  DAO.Entity.Pessoa,
   View.Pessoa.Interfaces,
   Data.DB,
-  uADCompClient,
   Comum.Types,
   System.SysUtils,
   System.Classes,
   View.Interfaces,
-  Presenter.Pessoa.Types;
+  Presenter.Pessoa.Types,
+  Model.Entity.Pessoa,
+  Model.Pessoa.Service;
 
 type
   TPessoaPresenter = class
@@ -20,15 +20,16 @@ type
   var
     FAfterDataChange: TProc;
     FRecordState: TDataSetState;
-    FService: TPessoaService;
+    FPessoaService: TPessoaService;
     FView: IView;
     FViewCadastro: IViewPessoaCadastro;
     FOnStateChange: TProc<TDataSetState>;
+    FDBDelay: Integer;
     procedure ExecuteAfterDataChange;
-    function ObterPessoaDaView: TPessoa;
     procedure SetAfterDataChange(const Value: TProc);
     procedure SetRecordState(const Value: TDataSetState);
     procedure SetOnStateChange(const Value: TProc<TDataSetState>);
+    procedure SetDBDelay(const Value: Integer);
   public
     constructor CreateFromView(AView: IView; AViewPessoa: IViewPessoaCadastro);
     constructor Create(AViewStyle: TPessoaViewStyle);
@@ -46,20 +47,22 @@ type
     property AfterDataChange: TProc read FAfterDataChange write SetAfterDataChange;
     property RecordState: TDataSetState read FRecordState;
     property OnStateChange: TProc<TDataSetState> read FOnStateChange write SetOnStateChange;
+    property DBDelay: Integer read FDBDelay write SetDBDelay;
   end;
 
 implementation
 
 uses
   System.UITypes,
-  Presenter.Pessoa.ViewFactory;
+  Presenter.Pessoa.ViewFactory,
+  DAO.Pessoa.Adapter;
 
 procedure TPessoaPresenter.Excluir(AId: Integer);
 begin
   if FRecordState in dsEditModes then
     raise Exception.Create('Não é possível excluir registro em edição!');
 
-  FService.Excluir(AId);
+  FPessoaService.Excluir(AId);
   ExecuteAfterDataChange;
 end;
 
@@ -84,9 +87,15 @@ var
   LPessoa: TPessoa;
 begin
   FView.Notificar('Carregando registro selecionado...', msLog);
-  Sleep(2000); //Atraso artifical para simular busca no banco
-  LPessoa := FService.ObterPorId(AId); //FService.GetCurrentFromDataset(FDataSetLista);
-  FViewCadastro.ExibirRegistro(LPessoa);
+
+  Sleep(FDBDelay); //Atraso artifical para simular busca no banco
+
+  LPessoa := FPessoaService.ObterPorId(AId);
+  try
+    FViewCadastro.ExibirRegistro(LPessoa);
+  finally
+    LPessoa.Free;
+  end;
 end;
 
 constructor TPessoaPresenter.Create(AViewStyle: TPessoaViewStyle);
@@ -108,7 +117,7 @@ end;
 
 constructor TPessoaPresenter.CreateFromView(AView: IView; AViewPessoa: IViewPessoaCadastro);
 begin
-  FService := TPessoaService.Create;
+  FPessoaService := TPessoaService.Create;
   FView := AView;
   FViewCadastro := AViewPessoa;
   SetRecordState(dsInactive);
@@ -116,7 +125,7 @@ end;
 
 destructor TPessoaPresenter.Destroy;
 begin
-  FreeAndNil(FService);
+  FreeAndNil(FPessoaService);
   inherited;
 end;
 
@@ -131,27 +140,19 @@ begin
   SetRecordState(dsInsert);
 end;
 
-function TPessoaPresenter.ObterPessoaDaView: TPessoa;
-begin
-  Result := TPessoa.Create;
-  Result.Id := FViewCadastro.ObterId;
-  Result.Nome := FViewCadastro.ObterNome;
-  Result.Idade := FViewCadastro.ObterIdade;
-end;
-
 procedure TPessoaPresenter.Salvar;
 var
   LPessoa: TPessoa;
 begin
-  LPessoa:= ObterPessoaDaView;
+  LPessoa:= FViewCadastro.ObterPessoa;
   try
     try
       case RecordState of
         dsEdit:
-         FService.Atualizar(LPessoa);
+         FPessoaService.Atualizar(LPessoa);
 
         dsInsert:
-         FService.Adicionar(LPessoa);
+         FPessoaService.Adicionar(LPessoa);
       else
         raise Exception.Create('Registro não disponível para salvar!');
       end;
@@ -176,6 +177,11 @@ end;
 procedure TPessoaPresenter.SetAfterDataChange(const Value: TProc);
 begin
   FAfterDataChange := Value;
+end;
+
+procedure TPessoaPresenter.SetDBDelay(const Value: Integer);
+begin
+  FDBDelay := Value;
 end;
 
 procedure TPessoaPresenter.SetOnStateChange(const Value: TProc<TDataSetState>);

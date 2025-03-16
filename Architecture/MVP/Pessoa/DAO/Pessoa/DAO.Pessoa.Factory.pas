@@ -1,9 +1,9 @@
-unit Model.DAO.Pessoa.Factory;
+unit DAO.Pessoa.Factory;
 
 interface
 
 uses
-  Model.DAO.Pessoa.Interfaces;
+  DAO.Pessoa.Interfaces;
 
 type
   TDAOPessoaFactory = class
@@ -13,7 +13,7 @@ type
 implementation
 
 uses
-  Model.DAO.Pessoa.Memory;
+  DAO.Pessoa.Memory;
 
 { TDAOPessoaFactory }
 
