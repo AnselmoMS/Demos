@@ -94,7 +94,7 @@ begin
   try
     for P in PESSOAS_CADASTRADAS do  //Consulta direto na fonte de dados
     begin
-      PessoaListagem.Create(P.Id, P.Nome, YearsBetween(Today, P.DataNascimento));
+      PessoaListagem.Create(P.Id, P.Nome, (YearOf(Today) -  YearOf(P.DataNascimento)) );
       Lista.Add(PessoaListagem);
     end;
     Result:= Lista.ToArray
@@ -143,11 +143,12 @@ var
   LPessoa: TPessoaTable;
 begin
   LPessoa := GetById(APessoa.Id);
-  
+
   if not Assigned(LPessoa) then
     raise Exception.Create(Format('Erro ao Atualizar: Pessoa com id %d não existe', [APessoa.Id]));
 
   LPessoa.LoadFrom(APessoa);
+  LPessoa.Free;
 end;
 
 end.

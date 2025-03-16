@@ -260,6 +260,7 @@ begin
   lblId.Caption := InTToStr(APessoa.Id);
   edtNome.Text := APessoa.Nome;
   meDataNascimento.Text := FormatDateTime('dd/mm/yyyy', APessoa.DataNascimento);
+  lblIdade.Caption := APessoa.GetIdade.ToString + ' anos';
   Notificar('Registro carregado '+ QuotedStr(APessoa.Nome), msLog);
 end;
 

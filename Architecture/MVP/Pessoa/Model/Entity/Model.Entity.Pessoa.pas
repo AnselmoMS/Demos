@@ -40,7 +40,7 @@ end;
 
 function TPessoa.GetIdade: Integer;
 begin
-  Result:= YearsBetween(Today, FDataNascimento);
+  Result:=  (YearOf(Today) -  YearOf(FDataNascimento));
 end;
 
 procedure TPessoa.LoadFrom(APessoa: TPessoa);
