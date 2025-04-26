@@ -14,94 +14,85 @@ uses
   Vcl.Dialogs,
   Vcl.StdCtrls,
   Vcl.Grids,
-  uADStanIntf, uADStanOption,
-  uADStanParam,
-  uADStanError,
-  uADDatSManager,
   Vcl.ExtCtrls,
   Vcl.DBCtrls,
   Data.DB,
-  uADCompClient,
   Vcl.DBGrids,
   Vcl.Samples.Spin,
-  Model.Entity.Pessoa,
-  JvDataSource,
-  uADGUIxIntf,
-  uADGUIxFormsWait,
-  uADCompGUIx,
   Comum.Types,
   Vcl.ComCtrls,
   Presenter.Pessoa,
   View.Pessoa.Interfaces,
   View.Interfaces,
-  Presenter.PessoaDataset;
+  Presenter.PessoaListagem,
+  System.Generics.Collections,
+  Model.Entity.Pessoa,
+  Datasnap.DBClient,
+  DAO.Entity.Pessoa, Vcl.Mask;
 
 type
-  TfrmPessoaCadastroCompleto = class(TForm, IView, IViewPessoaCadastro, IViewPessoaDataSet{, IViewSaldo})
+  TfrmPessoaCadastroCompleto = class(TForm, IView, IViewPessoaCadastro, IViewPessoaListagem{, IViewSaldo})
     edtNome: TEdit;
     btnNovo: TButton;
-    DBGrid1: TDBGrid;
-    dbnavLista: TDBNavigator;
+    DBGridListagem: TDBGrid;
     lblId: TLabel;
-    spnedtIdade: TSpinEdit;
-    dsLista: TJvDataSource;
     btnExcluir: TButton;
     btnSalvar: TButton;
     btnEditar: TButton;
     chkShowRecordOnScroll: TCheckBox;
-    ADGUIxWaitCursor1: TADGUIxWaitCursor;
     memLog: TMemo;
     pbLista: TProgressBar;
+    cdsListagem: TClientDataSet;
+    cdsListagemId: TIntegerField;
+    cdsListagemNome: TStringField;
+    cdsListagemIdade: TIntegerField;
+    Button1: TButton;
+    dsListagem: TDataSource;
+    meDataNascimento: TMaskEdit;
+    lblIdade: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btnSalvarClick(Sender: TObject);
-    procedure dsListaDataSetScrolled(Sender: TObject);
     procedure btnNovoClick(Sender: TObject);
-    procedure DBGrid1DblClick(Sender: TObject);
+    procedure DBGridListagemDblClick(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
     procedure btnEditarClick(Sender: TObject);
     procedure btnExcluirClick(Sender: TObject);
+    procedure dsListagemDataChange(Sender: TObject; Field: TField);
   private
     FPessoaPresenter: TPessoaPresenter;
-    FPessoaDatasetPresenter: TPessoaDatasetPresenter;
-    FMemTableLista: TADMemTable;
+    FPessoaListagemPresenter: TPessoaListagemPresenter;
     FTimerDelayLoadLista: TTimer;
+    procedure RestartDelayList;
+    function ObterId: Integer;
+    function ObterPessoa: TPessoa;
     procedure InicializarPresenter;
     procedure ConfigurarTimerDelayLista;
     procedure NavigateToNextControl(var Key: Char);
     procedure ExibirPessoaSelecionadaDaLista;
     procedure OnTimeOut(Sender: TObject);
-  public
-    constructor Create(AOwner: TComponent; APresenter: TPessoaPresenter); overload;
-    constructor Create(AOwner: TComponent); overload; override;
-    function AsView: IView;
-    function DataSetLista: TDataSet;
-    function ExibirExclusivo: TModalResult;
-    function ObterId: Integer;
-    function ObterIdade: Integer;
-    function ObterNome: string;
-    function Perguntar(AMensagem: String): TModalResult;
-    procedure Exibir;
-
+    procedure ExibirListagem(APessoaListagem: TArray<TPessoaListagem>);
     procedure Notificar(const AMensagem: string; AMessageSeverity: TMessageSeverity);
     procedure ExibirRegistro(APessoa: TPessoa);
     procedure HabilitarControlesAcoes(ARecordState: TDataSetState);
     procedure HabilitarControlesCadastro(AHabilitar: Boolean);
     procedure HabilitarControlesNavegar(ADataSetState: TDataSetState);
     procedure LimparControlesCadastro;
-    procedure SetDataSetLista(ADataSet: TDataSet);
+    function Perguntar(AMensagem: String): TModalResult;
+    procedure Exibir;
+  public
+    constructor Create(AOwner: TComponent; APresenter: TPessoaPresenter); overload;
+    constructor Create(AOwner: TComponent); overload; override;
+    function AsView: IView;
+    function ExibirExclusivo: TModalResult;
+
   end;
 
 implementation
 
 {$R *.dfm}
-
-function TfrmPessoaCadastroCompleto.ObterNome: string;
-begin
-  Result := edtNome.Text;
-end;
 
 procedure TfrmPessoaCadastroCompleto.OnTimeOut(Sender: TObject);
 begin
@@ -114,20 +105,17 @@ begin
   Result := Application.MessageBox(PChar(AMensagem), PChar(Self.Caption), MB_ICONQUESTION + MB_YESNO)
 end;
 
-procedure TfrmPessoaCadastroCompleto.SetDataSetLista(ADataSet: TDataSet);
-begin
-  FMemTableLista := TADMemTable(ADataSet);
-  dsLista.DataSet := FMemTableLista;
-end;
-
 function TfrmPessoaCadastroCompleto.ObterId: Integer;
 begin
   Result := StrToIntDef(lblId.Caption, 0)
 end;
 
-function TfrmPessoaCadastroCompleto.ObterIdade: Integer;
+function TfrmPessoaCadastroCompleto.ObterPessoa: TPessoa;
 begin
-  Result := spnedtIdade.Value;
+  Result := TPessoa.Create;
+  Result.Id := ObterId;
+  Result.Nome := edtNome.Text;
+  Result.DataNascimento := StrToDate(meDataNascimento.Text);
 end;
 
 function TfrmPessoaCadastroCompleto.AsView: IView;
@@ -159,7 +147,7 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.ConfigurarTimerDelayLista;
 begin
-  FTimerDelayLoadLista.Interval := 600;
+  FTimerDelayLoadLista.Interval := 300;
   FTimerDelayLoadLista.Enabled := False;
   FTimerDelayLoadLista.OnTimer := OnTimeOut;
 end;
@@ -174,21 +162,23 @@ end;
 constructor TfrmPessoaCadastroCompleto.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
+  FTimerDelayLoadLista:= TTimer.Create(Self);
+
   FPessoaPresenter := TPessoaPresenter.CreateFromView(Self, Self);
   InicializarPresenter;
 end;
 
-function TfrmPessoaCadastroCompleto.DataSetLista: TDataSet;
-begin
-  Result := dsLista.DataSet;
-end;
-
-procedure TfrmPessoaCadastroCompleto.DBGrid1DblClick(Sender: TObject);
+procedure TfrmPessoaCadastroCompleto.DBGridListagemDblClick(Sender: TObject);
 begin
   ExibirPessoaSelecionadaDaLista;
 end;
 
-procedure TfrmPessoaCadastroCompleto.dsListaDataSetScrolled(Sender: TObject);
+procedure TfrmPessoaCadastroCompleto.dsListagemDataChange(Sender: TObject; Field: TField);
+begin
+  RestartDelayList
+end;
+
+procedure TfrmPessoaCadastroCompleto.RestartDelayList;
 begin
   if chkShowRecordOnScroll.Checked then
   begin
@@ -205,6 +195,23 @@ end;
 function TfrmPessoaCadastroCompleto.ExibirExclusivo: TModalResult;
 begin
   Result := Self.ShowModal;
+end;
+
+procedure TfrmPessoaCadastroCompleto.ExibirListagem(APessoaListagem: TArray<TPessoaListagem>);
+var
+  LPessoa: TPessoaListagem;
+begin
+  cdsListagem.Close;
+  cdsListagem.Open;
+
+  for LPessoa in APessoaListagem do
+  begin
+    cdsListagem.Append;
+    cdsListagemId.AsInteger := LPessoa.Id;
+    cdsListagemNome.AsString := LPessoa.Nome;
+    cdsListagemIdade.AsInteger := LPessoa.Idade;
+    cdsListagem.Post;
+  end;
 end;
 
 procedure TfrmPessoaCadastroCompleto.Notificar(const AMensagem: string; AMessageSeverity: TMessageSeverity);
@@ -228,8 +235,6 @@ begin
 end;
 
 procedure TfrmPessoaCadastroCompleto.ExibirPessoaSelecionadaDaLista;
-var
-  LPessoa: TPessoa;
 begin
   try
     if FPessoaPresenter.RecordState in [dsInsert, dsEdit] then
@@ -238,12 +243,10 @@ begin
       else
         Abort;
 
-    LPessoa:= FPessoaDatasetPresenter.ObterPessoaDaLista;
-    try
-      ExibirRegistro(LPessoa);
-    finally
-      LPessoa.Free;
-    end;
+    if not (cdsListagem.Active and (cdsListagem.RecordCount >0)) then
+      Exit;
+
+    FPessoaPresenter.CarregarId(cdsListagemId.AsInteger);
   except
     on e: EAbort do
       Exit;
@@ -256,7 +259,8 @@ procedure TfrmPessoaCadastroCompleto.ExibirRegistro(APessoa: TPessoa);
 begin
   lblId.Caption := InTToStr(APessoa.Id);
   edtNome.Text := APessoa.Nome;
-  spnedtIdade.Value := APessoa.Idade;
+  meDataNascimento.Text := FormatDateTime('dd/mm/yyyy', APessoa.DataNascimento);
+  lblIdade.Caption := APessoa.GetIdade.ToString + ' anos';
   Notificar('Registro carregado '+ QuotedStr(APessoa.Nome), msLog);
 end;
 
@@ -267,15 +271,13 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.FormCreate(Sender: TObject);
 begin
-  FMemTableLista := nil;
-  FTimerDelayLoadLista:= TTimer.Create(Self);
   ConfigurarTimerDelayLista;
 end;
 
 procedure TfrmPessoaCadastroCompleto.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(FTimerDelayLoadLista);
-  FreeAndNil(FPessoaDataSetPresenter);
+  FreeAndNil(FPessoaListagemPresenter);
   FreeAndNil(FPessoaPresenter);
 end;
 
@@ -286,7 +288,9 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.FormShow(Sender: TObject);
 begin
-  FPessoaDatasetPresenter.CarregarLista;
+  FPessoaListagemPresenter.CarregarLista;
+  dsListagem.Enabled := True;
+
   HabilitarControlesCadastro(False);
   HabilitarControlesAcoes(dsBrowse);
 end;
@@ -302,7 +306,7 @@ end;
 procedure TfrmPessoaCadastroCompleto.HabilitarControlesCadastro(AHabilitar: Boolean);
 begin
   edtNome.Enabled := AHabilitar;
-  spnedtIdade.Enabled := AHabilitar;
+  meDataNascimento.Enabled := AHabilitar;
 end;
 
 procedure TfrmPessoaCadastroCompleto.HabilitarControlesNavegar(ADataSetState: TDataSetState);
@@ -312,8 +316,8 @@ end;
 
 procedure TfrmPessoaCadastroCompleto.InicializarPresenter;
 begin
-  FPessoaDatasetPresenter := TPessoaDatasetPresenter.Create(Self, Self);
-  FPessoaPresenter.AfterDataChange := FPessoaDatasetPresenter.CarregarLista;
+  FPessoaListagemPresenter := TPessoaListagemPresenter.Create(Self, Self);
+  FPessoaPresenter.AfterDataChange := FPessoaListagemPresenter.CarregarLista;
   FPessoaPresenter.OnStateChange := HabilitarControlesNavegar;
 end;
 
@@ -321,7 +325,7 @@ procedure TfrmPessoaCadastroCompleto.LimparControlesCadastro;
 begin
   lblId.Caption := '';
   edtNome.Text := TPessoa.DEFAULT_NOME;
-  spnedtIdade.Value := TPessoa.DEFAULT_IDADE;
+  meDataNascimento.Clear;
 end;
 
 procedure TfrmPessoaCadastroCompleto.NavigateToNextControl(var Key: Char);

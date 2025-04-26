@@ -1,13 +1,13 @@
-unit Model.Entity.Pessoa.List;
+unit DAO.Entity.Pessoa.List;
 
 interface
 
 uses
-  Model.Entity.Pessoa,
+  DAO.Entity.Pessoa,
   Generics.Collections;
 
 type
-  TPessoaList = class(TObjectList<TPessoa>)
+  TPessoaList = class(TObjectList<TPessoaTable>)
     procedure SortById;
   end;
 
@@ -22,8 +22,8 @@ uses
 procedure TPessoaList.SortById;
 begin
   Self.Sort(
-      TComparer<TPessoa>.Construct(
-        function(const Left, Right: TPessoa): Integer
+      TComparer<TPessoaTable>.Construct(
+        function(const Left, Right: TPessoaTable): Integer
         begin
           Result:= TComparer<Integer>.Default.Compare(Left.Id, Right.Id)
         end
